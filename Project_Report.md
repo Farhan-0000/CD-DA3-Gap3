@@ -23,8 +23,10 @@ The core pipeline was built to funnel every combined prompt through three parall
 
 Once the explainers mathematically ranked the importance of every token, our defense pipeline performed targeted token deletion. We passed the fully ranked token array into an excision module that amputated a specific top percentage of the most "dangerous" tokens, seamlessly piecing the remaining tokens back together and feeding the sanitized prompt back to the LLM for a final, safe generation.
 
-### Harmfulness Evaluation
-Because manual evaluation of thousands of prompt variations is impossible, we engineered an automated harmfulness evaluation suite. The standard approach requires an API-based LLM-as-a-judge (e.g., relying on Gemini or OpenAI endpoints) to read the final model generation and classify it as successfully fulfilled or rejected. Our pipeline integrates this API-based conceptual framework while augmenting it with direct local classifiers and AdvBench linguistic string-matching rules to robustly confirm if TinyLlama hallucinated, safely refused, or fell victim to the jailbreak.
+### Harmfulness Evaluation (The Judge)
+Because manual evaluation of thousands of prompt variations is impossible, we engineered an automated harmfulness evaluation suite. While the original architectural intent was to use **Google's `gemini-2.5-flash`** as a cloud-based LLM-as-a-judge, strict free-tier API rate limits (20 requests per day) made evaluating 3,900 distinct prompt variations impossible. 
+
+To achieve massive, unlimited scalability, we pivoted to a localized LLM-as-a-Judge pipeline. We deployed **`ProtectAI/distilroberta-base-rejection-v1`** (a highly specialized HuggingFace transformer fine-tuned explicitly for cybersecurity text classification) directly onto the local GPU. Our evaluation module first applies the AdvBench Linguistic Protocol, automatically flagging standard generated refusal language ("I apologize", "I cannot") and severely hallucinated gibberish (common at 90% deletion budgets) as Harmless (0). For coherent, non-refusal text, it passes the string to the `DistilRoBERTa` judge to definitively classify if TinyLlama successfully executed the malicious payload (Harmful = 1).
 
 ## 3. Experimental Setup and Metrics
 
