@@ -1,0 +1,11 @@
+torch
+transformers
+accelerate
+shap
+pandas
+numpy
+matplotlib
+seaborn
+tqdm
+google-generativeai
+scipy
